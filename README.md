@@ -3,14 +3,21 @@
 一个纯静态网页 App：手机浏览器打开链接即用，无需安装、无需小程序审核、不需要服务器。
 试看 68 题 / 23 张卡；付款后给开通码，输入即解锁全部 478 题、275 张知识卡；资料更新只要覆盖两个文件。
 
-## 一、部署（3 步，约 5 分钟）
+**正式链接**：https://123liuyulin.github.io/bencao-hengjian/
+仓库：https://github.com/123Liuyulin/bencao-hengjian （Public，main 分支根目录直接发布）
 
-1. 打开 GitHub，New repository，名字随意（例如 `benchmark`），选 **Public**，勾选 Add a README 后创建。
-2. 进入仓库 → Add file → Upload files，把本目录下**全部文件和文件夹**拖进去（`index.html`、`app.css`、`app.js`、`data/`），Commit。
-3. Settings → Pages → Source 选 `Deploy from a branch`，Branch 选 `main`、目录 `/ (root)`，Save。
-   等 1 分钟左右，链接为 `https://<你的用户名>.github.io/<仓库名>/`，手机打开即用。
+## 一、线上结构
 
-> 也可以放 Cloudflare Pages、Vercel、任意静态托管，目录结构不变。
+```
+index.html        页面结构（标题、tab、试看条）
+app.css           墨绿＋铜金配色，宋体
+app.js            逻辑：试看门禁、开通码校验、AES 解密全量、刷题、错题本
+trial.json        试看数据（明文，约 52 KB）
+full.enc          全量数据（AES-256-GCM 加密，约 708 KB）
+README.md         本说明
+```
+
+所有文件平铺在仓库根目录（不放 data/ 子目录），页面用相对路径 `trial.json`、`full.enc` 读取，换到任何静态托管都能用。
 
 ## 二、卖一单的动作
 
@@ -27,8 +34,8 @@
 
 1. 改 `云端素材_上传用/全量/tiku.js` 或 `zhongyao.js`；
 2. 跑 `node 工具/导出云端数据.js`，再跑 `node 工具/生成在线版.js`；
-3. 把新生成的 `data/trial.json`、`data/full.enc` 上传覆盖到仓库（GitHub 网页上传即可）；
-4. 顺手把 `index.html` 里的 `app.css`/`app.js` 版本参数不用动，但要把 `app.js` 里 `CONFIG.BUILD` 改成新日期，避免浏览器用旧缓存。
+3. 把新生成的 `trial.json`、`full.enc` 上传覆盖到仓库根目录（GitHub 网页上传即可）；
+4. 同时把 `app.js` 里 `CONFIG.BUILD` 改成新日期，避免浏览器继续用旧缓存。
 
 已开通用户刷新即见新内容，不用重新买、不用重新发码。
 
@@ -37,13 +44,8 @@
 - **没有服务器，就没有真正的"卡密验证"**。校验逻辑在网页里，密钥也在网页里；懂技术的人可以伪造码，也能在解锁后把数据存下来。它防的是"随手转发给同学"，防不了"专业倒卖"。要真防，必须上服务端（云函数或轻服务器），这是成本与收益的取舍。
 - **授权只认浏览器**。换手机、换浏览器、清缓存都要重新输入同一个码（不额外收费）。同一个码可以被多人同时用，目前没有设备数限制。
 - **公开仓库 = 密钥公开**。想让门槛高一点，可以后期改成"码 + 服务端校验"，或把仓库设为私有（GitHub Pages 私有仓库需要付费账号）。
+- **平台合规**：不要在商品标题/详情里写"押题、保过、内部资料、官方指定、真题原题、独家"。
 
-## 五、目录
+## 五、备用部署
 
-```
-index.html        页面结构（标题、tab、试看条）
-app.css           墨绿＋铜金配色，宋体
-app.js            逻辑：试看门禁、开通码校验、AES 解密全量、刷题、错题本
-data/trial.json   试看数据（明文，约 52 KB）
-data/full.enc     全量数据（AES-256-GCM 加密，约 708 KB）
-```
+也可以放 Cloudflare Pages、Vercel 或任意静态托管：把这 6 个文件传到站点根目录即可，不需要改代码。

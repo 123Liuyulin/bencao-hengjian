@@ -140,8 +140,8 @@
               return '<div class="sect"><div class="lb">' + esc(s.label) + '</div><ul>' +
                 s.items.map(function (it) { return '<li>' + esc(it) + '</li>' }).join('') + '</ul></div>'
             }).join('')
-            var vlist = (S.full && S.full.variants && S.full.variants.byCard[x.id]) || []
-            if (vlist.length) body += '<button class="ghost wide vbtn" data-vcard="' + esc(x.id) + '">举一反三 · 用这个知识点出 ' + Math.min(6, vlist.length) + ' 道新题</button>'
+            var vn = (S.full && S.full.varCards && S.full.varCards[x.id]) || 0
+            if (vn) body += '<button class="ghost wide vbtn" data-vcard="' + esc(x.id) + '">举一反三 · 用这个知识点出 ' + Math.min(6, vn) + ' 道新题</button>'
             if (x.tags && x.tags.length) body += '<div class="tags">' + x.tags.map(function (t) { return '<span class="tag">' + esc(t) + '</span>' }).join('') + '</div>'
           }
           return '<div class="carditem" data-card="' + esc(x.id) + '">' +
@@ -207,9 +207,9 @@
     ;['single', 'fill', 'short', 'essay', 'term'].forEach(function (k) {
       (b[k] || []).forEach(function (i) { if (wr.indexOf(i.id) >= 0) list.push(i) })
     })
-    if (S.full && S.full.variants) {
-      Object.keys(S.full.variants.byCard).forEach(function (cid) {
-        S.full.variants.byCard[cid].forEach(function (i) { if (wr.indexOf(i.id) >= 0) list.push(i) })
+    if (S.full && S.full.varData) {
+      Object.keys(S.full.varData).forEach(function (cid) {
+        S.full.varData[cid].forEach(function (i) { if (wr.indexOf(i.id) >= 0) list.push(i) })
       })
     }
     $('wrongBox').innerHTML = list.slice(0, 40).map(function (i) {
@@ -225,9 +225,34 @@
     ;(d.chapters || []).forEach(function (c) { (c.cards || []).forEach(function (x) { if (x.id === cid) hit = x }) })
     return hit
   }
+  function decryptVariants() {
+    if (S.varReady) return Promise.resolve(true)
+    return fetch('variants.enc?v=' + CONFIG.BUILD).then(function (r) { return r.text() }).then(function (txt) {
+      var parts = txt.trim().split('.'), iv = b64(parts[0]), ct = b64(parts[1])
+      return sha256hex(CONFIG.SECRET).then(function (hex) {
+        return crypto.subtle.importKey('raw', hex2buf(hex), { name: 'AES-GCM' }, false, ['decrypt']).then(function (key) {
+          return crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv, tagLength: 128 }, key, ct)
+        })
+      }).then(function (buf) {
+        var obj = JSON.parse(new TextDecoder().decode(buf))
+        S.full.varData = obj.byCard || {}
+        S.varReady = true
+        return true
+      })
+    }).catch(function () { return false })
+  }
+
   function openVariants(cid) {
     if (!isActive()) { go('me'); toast('举一反三需开通后使用'); return }
-    var v = S.full && S.full.variants && S.full.variants.byCard[cid]
+    if (!S.varReady) {
+      toast('正在加载变式题…')
+      decryptVariants().then(function (ok) {
+        if (!ok) { toast('变式题加载失败，请稍后重试'); return }
+        openVariants(cid)
+      })
+      return
+    }
+    var v = (S.full.varData || {})[cid]
     if (!v || !v.length) { toast('这个知识点暂时没有变式题'); return }
     var singles = v.filter(function (q) { return q.o }).sort(function () { return Math.random() - 0.5 })
     var shorts = v.filter(function (q) { return !q.o }).sort(function () { return Math.random() - 0.5 })

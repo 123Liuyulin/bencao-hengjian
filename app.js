@@ -10,7 +10,7 @@
     TOTAL_C: 275,
     FREE_UNITS: ['U01', 'U02'],
     FREE_CHAPTERS: 2,
-    BUILD: '2026-11-18b'
+    BUILD: '2026-11-18c'
   }
 
   var LS = { auth: 'bhj_auth', wrong: 'bhj_wrong', stat: 'bhj_stat', open: 'bhj_open' }
